@@ -1,42 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>Check Submission</title>
+  <title>ตรวจสอบการลงทะเบียนเวิร์กชอป</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 1rem;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
-  <h1>Check Your Workshop Submission</h1>
+  <h1>ตรวจสอบการลงทะเบียนเวิร์กชอป</h1>
 
-  <input type="email" id="emailInput" placeholder="Enter your email" />
-  <button onclick="checkSubmission()">Check</button>
+  <input type="email" id="emailInput" placeholder="กรอกอีเมลของคุณ" />
+  <button onclick="checkSubmission()">ตรวจสอบ</button>
 
-  <pre id="result"></pre>
+  <pre id="result">กรุณากรอกอีเมลแล้วกดตรวจสอบ</pre>
 
   <script>
     async function checkSubmission() {
-      const email = document.getElementById('emailInput').value;
+      const email = document.getElementById('emailInput').value.trim();
       const resultEl = document.getElementById('result');
 
       if (!email) {
-        resultEl.textContent = 'Please enter an email.';
+        resultEl.textContent = 'กรุณากรอกอีเมลก่อน';
         return;
       }
 
       const url = `https://set-maggot-indirectly.ngrok-free.app/webhook/check-submission?email=${encodeURIComponent(email)}`;
-      
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        const sessions = data.body.sessions;
 
-        if (sessions && sessions.length) {
-          resultEl.textContent = `Sessions found:\n- ${sessions.join('\n- ')}`;
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+        const body = data.body || data;
+
+        if (body && body.email) {
+          const { email, sessions, message } = body;
+          resultEl.textContent =
+            `📧 อีเมล: ${email}\n📚 เซสชันที่พบ:\n${sessions.map(s => '- ' + s).join('\n')}\n\n✅ ${message}`;
         } else {
-          resultEl.textContent = 'No sessions found for this email.';
+          resultEl.textContent = 'ไม่พบข้อมูล กรุณาตรวจสอบอีเมลอีกครั้ง';
         }
+
       } catch (error) {
-        resultEl.textContent = 'Error fetching data.';
-        console.error(error);
+        console.error('Fetch error:', error);
+        resultEl.textContent = 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล';
       }
     }
   </script>
