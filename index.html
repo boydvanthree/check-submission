@@ -1,31 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Check Submission</title>
 </head>
 <body>
-  <h1>Check Your Submission</h1>
-  <form id="checkForm">
-    <input type="email" id="email" name="email" required placeholder="Enter your email" />
-    <button type="submit">Check</button>
-  </form>
+  <h1>Check Your Workshop Submission</h1>
+
+  <input type="email" id="emailInput" placeholder="Enter your email" />
+  <button onclick="checkSubmission()">Check</button>
+
   <pre id="result"></pre>
 
   <script>
-    const form = document.getElementById("checkForm");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value;
+    async function checkSubmission() {
+      const email = document.getElementById('emailInput').value;
+      const resultEl = document.getElementById('result');
 
-      try {
-        const res = await fetch(`https://set-maggot-indirectly.ngrok-free.app/webhook/check-submission?email=${encodeURIComponent(email)}`);
-        const data = await res.json();
-        document.getElementById("result").textContent = JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById("result").textContent = "Error fetching submission data.";
+      if (!email) {
+        resultEl.textContent = 'Please enter an email.';
+        return;
       }
-    });
+
+      const url = `https://set-maggot-indirectly.ngrok-free.app/webhook/check-submission?email=${encodeURIComponent(email)}`;
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const sessions = data.body.sessions;
+
+        if (sessions && sessions.length) {
+          resultEl.textContent = `Sessions found:\n- ${sessions.join('\n- ')}`;
+        } else {
+          resultEl.textContent = 'No sessions found for this email.';
+        }
+      } catch (error) {
+        resultEl.textContent = 'Error fetching data.';
+        console.error(error);
+      }
+    }
   </script>
 </body>
 </html>
