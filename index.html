@@ -72,7 +72,7 @@
         loading.classList.remove('hidden');
 
         try {
-          const url = new URL('https://adapted-liberal-rhino.ngrok-free.app/webhook-test/check-submission');
+          const url = new URL('https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission');
           url.searchParams.append('email', email);
           if (section) url.searchParams.append('section', section);
 
