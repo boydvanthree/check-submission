@@ -2,107 +2,63 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ตรวจสอบการลงทะเบียน</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>ตรวจสอบรายชื่อ</title>
   <style>
-    body { font-family: 'Sarabun', sans-serif; }
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+    #result {
+      margin-top: 1.5rem;
+      border-top: 1px solid #ccc;
+      padding-top: 1rem;
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-md">
-    <h1 class="text-2xl md:text-3xl font-bold text-center mb-6 text-indigo-700">ตรวจสอบการลงทะเบียน</h1>
+<body>
+  <h2>🔍 ตรวจสอบรายชื่อรับเกียรติบัตร</h2>
+  <label>กรอกอีเมลของคุณ:</label>
+  <input type="email" id="email" placeholder="your@email.com" required />
+  <label>หัวข้อ (ถ้ามี):</label>
+  <input type="text" id="section" placeholder="ชื่อหัวข้อหรือเวิร์กช็อป" />
+  <button onclick="check()">ตรวจสอบ</button>
 
-    <form id="checkForm" class="space-y-4">
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">อีเมล <span class="text-red-500">*</span></label>
-        <input
-          type="email"
-          id="email"
-          required
-          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          placeholder="your.email@example.com"
-        >
-      </div>
-
-      <div>
-        <label for="section" class="block text-sm font-medium text-gray-700 mb-1">หัวข้อเวิร์คช็อป (ไม่บังคับ)</label>
-        <input
-          type="text"
-          id="section"
-          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          placeholder="เช่น การออกแบบเว็บไซต์"
-        >
-      </div>
-
-      <button
-        type="submit"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-      >
-        ตรวจสอบ
-      </button>
-    </form>
-
-    <div id="loading" class="hidden mt-6 text-center">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent"></div>
-      <p class="mt-2 text-gray-600">กำลังตรวจสอบข้อมูล...</p>
-    </div>
-
-    <div id="result" class="hidden mt-6 rounded-lg p-5 border"></div>
-
-    <div id="error" class="hidden mt-6 bg-red-50 text-red-700 p-4 rounded-lg"></div>
-  </div>
+  <div id="result"></div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('checkForm');
-      const loading = document.getElementById('loading');
-      const result = document.getElementById('result');
-      const error = document.getElementById('error');
+    async function check() {
+      const email = document.getElementById("email").value.trim();
+      const section = document.getElementById("section").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "⏳ กำลังตรวจสอบ...";
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+      try {
+        const params = new URLSearchParams({ email, section });
+        const res = await fetch(`https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission?${params}`);
+        const data = await res.json();
 
-        const email = document.getElementById('email').value.trim();
-        const section = document.getElementById('section').value.trim();
-
-        result.classList.add('hidden');
-        error.classList.add('hidden');
-        loading.classList.remove('hidden');
-
-        try {
-          const url = new URL('https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission');
-          url.searchParams.append('email', email);
-          if (section) url.searchParams.append('section', section);
-
-          const response = await fetch(url);
-          const data = await response.json();
-          loading.classList.add('hidden');
-
-          if (response.ok) {
-            result.innerHTML = `
-              <h2 class="text-xl font-semibold mb-3 text-indigo-700">ผลการตรวจสอบ</h2>
-              <div class="space-y-2">
-                <p><span class="font-medium">ชื่อ:</span> ${data.name || '-'}</p>
-                <p><span class="font-medium">องค์กร:</span> ${data.organisation || '-'}</p>
-                <p><span class="font-medium">จังหวัด:</span> ${data.province || '-'}</p>
-                <p><span class="font-medium">หัวข้อเวิร์คช็อป:</span> ${data.workshop_title || '-'}</p>
-              </div>
-            `;
-            result.classList.remove('hidden');
-            result.classList.add('bg-green-50', 'border-green-200');
-          } else {
-            error.textContent = data.message || 'ไม่พบข้อมูลการลงทะเบียน กรุณาตรวจสอบอีเมลของท่านอีกครั้ง';
-            error.classList.remove('hidden');
-          }
-        } catch (err) {
-          loading.classList.add('hidden');
-          error.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง';
-          error.classList.remove('hidden');
+        if (data.name) {
+          resultDiv.innerHTML = `
+            <h3>✅ พบข้อมูลของคุณแล้ว</h3>
+            <p><strong>ชื่อ:</strong> ${data.name}</p>
+            <p><strong>หน่วยงาน:</strong> ${data.org}</p>
+            <p><strong>จังหวัด:</strong> ${data.province}</p>
+            <p><strong>หัวข้อ:</strong> ${data.sectionName}</p>
+          `;
+        } else {
+          resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message || "ไม่พบข้อมูล"}</p>`;
         }
-      });
-    });
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">⚠️ มีข้อผิดพลาดในการเชื่อมต่อ</p>`;
+      }
+    }
   </script>
 </body>
 </html>
