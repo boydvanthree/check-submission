@@ -1,91 +1,81 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ตรวจสอบรายชื่อ</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Your Workshop Submission</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
       max-width: 600px;
-      margin: auto;
-      background: #f4f8ff;
-    }
-    label {
-      font-weight: bold;
-    }
-    input, button {
-      padding: 0.75rem;
-      margin-top: 0.5rem;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    button {
-      background-color: #4f46e5;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-    }
-    button:hover {
-      background-color: #4338ca;
-    }
-    #result {
-      margin-top: 1.5rem;
-      border-top: 1px solid #ccc;
-      padding-top: 1rem;
-      background: #fff;
-      border-radius: 6px;
+      margin: 50px auto;
       padding: 1rem;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      box-sizing: border-box;
+    }
+
+    pre {
+      background-color: #fff;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   </style>
 </head>
 <body>
-  <h2>🔍 ตรวจสอบรายชื่อผู้ลงทะเบียน</h2>
-  <label for="email">กรอกอีเมลของคุณ:</label>
-  <input type="email" id="email" placeholder="your@email.com" required />
-  <button onclick="check()">ตรวจสอบ</button>
 
-  <div id="result"></div>
+  <h1>Check Workshop Submission</h1>
+  <p>Enter your email to see your registration details.</p>
+
+  <input id="email" type="email" placeholder="Your email address" />
+  <button onclick="checkSubmission()">Check Submission</button>
+
+  <pre id="result"></pre>
 
   <script>
-    async function check() {
+    async function checkSubmission() {
       const email = document.getElementById("email").value.trim();
-      const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "⏳ กำลังตรวจสอบ...";
+      const resultBox = document.getElementById("result");
 
       if (!email) {
-        resultDiv.innerHTML = `<p style="color:red;">⚠️ กรุณากรอกอีเมล</p>`;
+        resultBox.textContent = "❌ Please enter a valid email.";
         return;
       }
 
-      try {
-        const params = new URLSearchParams({ email });
-        const res = await fetch(`https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission?${params}`);
-        const data = await res.json();
+      resultBox.textContent = "⏳ Checking...";
 
-        if (res.ok && Array.isArray(data) && data.length > 0) {
-          let content = `<h3>✅ พบข้อมูลจำนวน ${data.length} รายการ</h3>`;
-          content += data.map((entry, index) => `
-            <div style="margin-bottom: 1rem;">
-              <strong>📌 รายการที่ ${index + 1}</strong><br>
-              👤 ชื่อ: ${entry.name || '-'}<br>
-              🏢 องค์กร: ${entry.organisation || '-'}<br>
-              📍 จังหวัด: ${entry.province || '-'}<br>
-              📝 หัวข้อเวิร์กช็อป: ${entry.workshop_title || '-'}
-            </div>
-          `).join('');
-          resultDiv.innerHTML = content;
+      try {
+        const response = await fetch(`https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.message === "Success") {
+          resultBox.textContent = `
+✅ Name: ${data.name}
+🏢 Organisation: ${data.organisation}
+📍 Province: ${data.province}
+📚 Workshop Title: ${data.workshop_title}
+          `.trim();
         } else {
-          resultDiv.innerHTML = `<p style="color:red;">❌ ไม่พบข้อมูลการลงทะเบียนสำหรับอีเมลนี้</p>`;
+          resultBox.textContent = "⚠️ Submission not found.";
         }
       } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red;">⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ</p>`;
+        resultBox.textContent = "❌ Error fetching data. Please try again.";
       }
     }
   </script>
+
 </body>
 </html>
