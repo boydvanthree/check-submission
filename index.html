@@ -3,31 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <title>ตรวจสอบรายชื่อ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: sans-serif;
       padding: 2rem;
       max-width: 600px;
       margin: auto;
+      background: #f4f8ff;
+    }
+    label {
+      font-weight: bold;
     }
     input, button {
-      padding: 0.5rem;
+      padding: 0.75rem;
       margin-top: 0.5rem;
       width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #4f46e5;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #4338ca;
     }
     #result {
       margin-top: 1.5rem;
       border-top: 1px solid #ccc;
       padding-top: 1rem;
+      background: #fff;
+      border-radius: 6px;
+      padding: 1rem;
     }
   </style>
 </head>
 <body>
-  <h2>🔍 ตรวจสอบรายชื่อรับเกียรติบัตร</h2>
-  <label>กรอกอีเมลของคุณ:</label>
+  <h2>🔍 ตรวจสอบรายชื่อผู้ลงทะเบียน</h2>
+  <label for="email">กรอกอีเมลของคุณ:</label>
   <input type="email" id="email" placeholder="your@email.com" required />
-  <label>หัวข้อ (ถ้ามี):</label>
-  <input type="text" id="section" placeholder="ชื่อหัวข้อหรือเวิร์กช็อป" />
   <button onclick="check()">ตรวจสอบ</button>
 
   <div id="result"></div>
@@ -35,28 +54,36 @@
   <script>
     async function check() {
       const email = document.getElementById("email").value.trim();
-      const section = document.getElementById("section").value.trim();
       const resultDiv = document.getElementById("result");
       resultDiv.innerHTML = "⏳ กำลังตรวจสอบ...";
 
+      if (!email) {
+        resultDiv.innerHTML = `<p style="color:red;">⚠️ กรุณากรอกอีเมล</p>`;
+        return;
+      }
+
       try {
-        const params = new URLSearchParams({ email, section });
+        const params = new URLSearchParams({ email });
         const res = await fetch(`https://adapted-liberal-rhino.ngrok-free.app/webhook/check-submission?${params}`);
         const data = await res.json();
 
-        if (data.name) {
-          resultDiv.innerHTML = `
-            <h3>✅ พบข้อมูลของคุณแล้ว</h3>
-            <p><strong>ชื่อ:</strong> ${data.name}</p>
-            <p><strong>หน่วยงาน:</strong> ${data.org}</p>
-            <p><strong>จังหวัด:</strong> ${data.province}</p>
-            <p><strong>หัวข้อ:</strong> ${data.sectionName}</p>
-          `;
+        if (res.ok && Array.isArray(data) && data.length > 0) {
+          let content = `<h3>✅ พบข้อมูลจำนวน ${data.length} รายการ</h3>`;
+          content += data.map((entry, index) => `
+            <div style="margin-bottom: 1rem;">
+              <strong>📌 รายการที่ ${index + 1}</strong><br>
+              👤 ชื่อ: ${entry.name || '-'}<br>
+              🏢 องค์กร: ${entry.organisation || '-'}<br>
+              📍 จังหวัด: ${entry.province || '-'}<br>
+              📝 หัวข้อเวิร์กช็อป: ${entry.workshop_title || '-'}
+            </div>
+          `).join('');
+          resultDiv.innerHTML = content;
         } else {
-          resultDiv.innerHTML = `<p style="color:red;">❌ ${data.message || "ไม่พบข้อมูล"}</p>`;
+          resultDiv.innerHTML = `<p style="color:red;">❌ ไม่พบข้อมูลการลงทะเบียนสำหรับอีเมลนี้</p>`;
         }
       } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red;">⚠️ มีข้อผิดพลาดในการเชื่อมต่อ</p>`;
+        resultDiv.innerHTML = `<p style="color:red;">⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ</p>`;
       }
     }
   </script>
